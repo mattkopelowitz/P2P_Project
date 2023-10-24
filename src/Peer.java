@@ -28,9 +28,9 @@ public class Peer {
     BitSet bitfield;
     int numPiecesDownloaded;
     boolean hasFile;
-    //int unchokingInterval;
-    //int optimisticUnchokingInterval;
-    //WritingLog logger;
+    int unchokingInterval;
+    int optimisticUnchokingInterval;
+    LogWriter log;
 
     public void setInfo(int id, String name, int port, int conFile) {
         peerID = id;

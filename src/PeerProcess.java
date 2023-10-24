@@ -29,16 +29,31 @@ public class PeerProcess {
         peers.get(peerID).setPeerManager(peers);
         peers.get(peerID).readFile();
 
+        // Start Logs
+        LogWriter log = new LogWriter(peers.get(peerID));
+        log.setVars(peerID, peers.get(peerID).bitfield, peers.get(peerID).hostName, peers.get(peerID).portNumber, peers.get(peerID).containsFile);
+        log.setCommonVars(peers.get(peerID).numOfPreferredNeighbors, peers.get(peerID).unchokingInterval, peers.get(peerID).optimisticUnchokingInterval, peers.get(peerID).downloadFileName, peers.get(peerID).fileSize, peers.get(peerID).pieceSize, peers.get(peerID).numPieces);
 
+        // Start Server
+        //Server server = new Server(peers.get(peerID));
+        //Thread serverThread = new Thread(server);
+        //serverThread.start();
 
+        // Create Peer Clients
+        Iterator iter = peers.entrySet().iterator();
+        while (iter.hasNext()) {
+            Map.Entry p = (Map.Entry)iter.next();
 
+            if ((int)p.getKey() < peerID) {
+                //Client client = new Client(peers.get(peerID), (Peer)p.getValue());
+                //client.link();
+                log.tcpToPeer(peerID, (int)p.getKey());
+            }
 
-        // Implement Peer Behavior
-        // Handle TCP connections, message exchanges, choking/unchoking, file management, etc.
+//            peers.get(peerID).peerChokeTracker();
+//            peers.get(peerID).startOptimisticallyUnchokingPeer();
+        }
 
-        // Implement Logging
-//        String logEntry = "[Time]: Peer " + peerID + " is unchoked by [peer_ID]";
-        // Write logEntry to the log file
 
         // Implement File Handling
         // Manage complete and partial files
