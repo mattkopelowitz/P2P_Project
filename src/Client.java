@@ -4,14 +4,14 @@ import java.nio.*;
 import java.nio.channels.*;
 import java.util.*;
 
-public class BitTorrentClient 
+public class Client 
 {
     Socket peerSocket;
     ObjectOutputStream out;
     ObjectInputStream in;
     String message;
 
-    public BitTorrentClient() 
+    public Client() 
 	{}
 
     void run() 
@@ -161,7 +161,7 @@ public class BitTorrentClient
 
     public static void main(String[] args) 
 	{
-        BitTorrentClient client = new BitTorrentClient();
+        Client client = new Client();
         client.run();
     }
 }

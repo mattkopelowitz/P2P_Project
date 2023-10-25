@@ -5,7 +5,7 @@ import java.nio.*;
 import java.nio.channels.*;
 import java.util.*;
 
-public class BitTorrentServer 
+public class Server 
 {
     private static final int sPort = 6881;
 
