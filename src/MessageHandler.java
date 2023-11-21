@@ -10,9 +10,9 @@ public class MessageHandler implements Runnable{
         // implement switch case for message type
 
         //case 0: log choked
-
+        choke();
         //case 1: log unchoked, if peer has a necessary file, send request
-
+        unchoke();
         //case 2: log interested
 
         //case 3: log not interested
@@ -24,5 +24,15 @@ public class MessageHandler implements Runnable{
         //case 6: log request, send piece if unchoked
 
         //case 7: take in piece, send have to peers
+    }
+
+    public byte[] choke() {
+        byte[] msg = new byte[0];
+        return msg;
+    }
+
+    public byte[] unchoke() {
+        byte[] msg = new byte[0];
+        return msg;
     }
 }

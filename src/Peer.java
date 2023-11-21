@@ -1,9 +1,10 @@
 import java.io.*;
 import java.util.*;
 import java.nio.file.*;
+import java.time.*;
 public class Peer {
 
-    // Peer info from PeerInfo.cfg
+    // Peer info variables from PeerInfo.cfg
     int peerID;
     String hostName;
     int portNumber;
@@ -14,12 +15,12 @@ public class Peer {
     byte[][] file;
     int downloadedBytes;
     double downloadRate;
-    //ObjectOutputStream out;
-    //private MessageCreator creator;
-    //int optimisticallyUnchockedPeer;
-    //List<Integer> unchokedPeers;
+    ObjectOutputStream out;
+    private MessageHandler creator;
+    int optimisticallyUnchockedPeer;
+    List<Integer> unchokedPeers;
 
-    // Common info from Common.cfg
+    // Common info variables from Common.cfg
     int numOfPreferredNeighbors;
     String downloadFileName;
     int fileSize;
@@ -41,7 +42,7 @@ public class Peer {
         interestingPieces = new HashMap<Integer, BitSet>();
         interestedPeers = new ArrayList<>();
         bitfield = new BitSet(numPieces);
-        //creator = new MessageCreator();
+        creator = new MessageHandler();
         downloadedBytes = 0;
         numPiecesDownloaded = 0;
 
@@ -59,7 +60,7 @@ public class Peer {
 
     public void setPeerManager(HashMap<Integer, Peer> peerMan){
         peerManager = peerMan;
-        //logger = new WritingLog(peerManager.get(peerID));
+        log = new LogWriter(peerManager.get(peerID));
     }
 
     public void readFile() {
@@ -74,7 +75,7 @@ public class Peer {
         }
     }
 
-    void readCommonCfg() throws FileNotFoundException{
+    void readCommonCfg() throws FileNotFoundException {
         File common = new File("Common.cfg");
         List<String> vars = new ArrayList<>();
 
@@ -91,7 +92,134 @@ public class Peer {
         fileSize = Integer.parseInt(vars.get(4));
         pieceSize = Integer.parseInt(vars.get(5));
         numPieces = (int) Math.ceil((double)fileSize/pieceSize);
-        //unchokingInterval = Integer.parseInt(vars.get(1)) * 1000;
-        //optimisticUnchokingInterval = Integer.parseInt(vars.get(2)) * 1000;
+        unchokingInterval = Integer.parseInt(vars.get(1)) * 1000;
+        optimisticUnchokingInterval = Integer.parseInt(vars.get(2)) * 1000;
     }
+
+    public void chokeCounter() {
+        Peer peer = this;
+        Instant[] startTime = {Instant.now()};
+        Thread thread = new Thread(() -> {
+            while (true) {
+                try {
+                    peersSelection(interestedPeers, startTime[0]);
+                    startTime[0] = Instant.now();
+                    Thread.sleep(unchokingInterval);
+                } catch (InterruptedException | IOException e) {
+                    System.out.println("Interruption");
+                    e.printStackTrace();
+                }
+            }
+        });
+        thread.start();
+    }
+
+    public void resetDownloadBytes() {
+        this.downloadedBytes = 0;
+    }
+
+    public void send(byte[] msg, ObjectOutputStream stream, int remotePeerID) {
+        try {
+            stream.writeObject(msg);
+            stream.flush();
+        } catch(IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void rmUnchoked(int peerID) {
+        if (unchokedPeers.contains(peerID)) {
+            unchokedPeers.remove(peerID);
+        }
+    }
+
+    public void addUnchoked(int peerID) {
+        unchokedPeers.add(peerID);
+    }
+
+    public static <K, V> K getKey(HashMap<K, V> map, V value) {
+        return map.keySet().stream().filter(key -> value.equals(map.get(key))).findAny().get();
+    }
+    public void peersSelection(List<Integer> interestedPeers, Instant startTime) throws IOException {
+        HashMap<Integer, Double> candidatePeers = new HashMap<>();
+        int[] preferredNeighbors = new int[numOfPreferredNeighbors];
+        List<Integer> peersToChoke = new ArrayList<>();
+        Instant finish = Instant.now();
+
+        peerManager.forEach((id, peerValues) -> {
+            if (id != peerID) {
+                int timeElapsed = Duration.between(startTime, finish).getNano();
+                peerValues.downloadRate = ((double) peerValues.downloadedBytes / timeElapsed);
+                candidatePeers.put(id, peerValues.downloadRate);
+            }
+        });
+
+        resetDownloadBytes();
+
+        Collection<Double> values = candidatePeers.values();
+        ArrayList<Double> listOfValues = new ArrayList<>(values);
+        listOfValues.sort(Comparator.naturalOrder());
+
+        if (!interestedPeers.isEmpty()) {
+            int peerSelectionLimit = Math.min(interestedPeers.size(), preferredNeighbors.length);
+
+            for (int i = 0; i < peerSelectionLimit; i++) {
+                preferredNeighbors[i] = interestedPeers.get(i);
+            }
+
+            log.changeNeighbors(peerID, preferredNeighbors);
+
+            unchokedPeers.stream()
+                    .filter(peer -> !Arrays.stream(preferredNeighbors).anyMatch(neighbor -> neighbor == peer && peer != 0))
+                    .forEach(peer -> {
+                        send(creator.choke(), peerManager.get(peer).out, peer);
+                        peersToChoke.add(peer);
+                    });
+
+            peersToChoke.forEach(this::rmUnchoked);
+        } else if (containsFile == 1) {
+            Collections.shuffle(interestedPeers, new Random());
+            for (int i = 0; i < preferredNeighbors.length; i++) {
+                preferredNeighbors[i] = interestedPeers.get(i);
+            }
+
+            log.changeNeighbors(peerID, preferredNeighbors);
+
+            unchokedPeers.stream()
+                    .filter(peer -> !Arrays.stream(preferredNeighbors).anyMatch(neighbor -> neighbor == peer && peer != 0))
+                    .forEach(peer -> {
+                        send(creator.choke(), peerManager.get(peer).out, peer);
+                        peersToChoke.add(peer);
+                    });
+
+            peersToChoke.forEach(this::rmUnchoked);
+        } else {
+            for (int i = 0; i < preferredNeighbors.length; i++) {
+                if (interestedPeers.contains(getKey(candidatePeers, listOfValues.get(listOfValues.size() - 1)))) {
+                    preferredNeighbors[i] = getKey(candidatePeers, listOfValues.get(listOfValues.size() - 1));
+                }
+                listOfValues.remove(listOfValues.size() - 1);
+            }
+
+            log.changeNeighbors(peerID, preferredNeighbors);
+
+            Arrays.stream(preferredNeighbors)
+                    .filter(neighbor -> !unchokedPeers.contains(neighbor) && neighbor != 0)
+                    .forEach(neighbor -> {
+                        addUnchoked(neighbor);
+                        send(creator.unchoke(), peerManager.get(neighbor).out, neighbor);
+                    });
+
+            unchokedPeers.stream()
+                    .filter(peer -> !Arrays.stream(preferredNeighbors).anyMatch(neighbor -> neighbor == peer && peer != 0))
+                    .forEach(peer -> {
+                        send(creator.choke(), peerManager.get(peer).out, peer);
+                        peersToChoke.add(peer);
+                    });
+
+            peersToChoke.forEach(this::rmUnchoked);
+        }
+    }
+
+
 }

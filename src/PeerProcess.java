@@ -35,9 +35,9 @@ public class PeerProcess {
         log.setCommonVars(peers.get(peerID).numOfPreferredNeighbors, peers.get(peerID).unchokingInterval, peers.get(peerID).optimisticUnchokingInterval, peers.get(peerID).downloadFileName, peers.get(peerID).fileSize, peers.get(peerID).pieceSize, peers.get(peerID).numPieces);
 
         // Start Server
-        //Server server = new Server(peers.get(peerID));
-        //Thread serverThread = new Thread(server);
-        //serverThread.start();
+        Server server = new Server(peers.get(peerID));
+        Thread serverThread = new Thread(server);
+        serverThread.start();
 
         // Create Peer Clients
         Iterator iter = peers.entrySet().iterator();
@@ -45,21 +45,14 @@ public class PeerProcess {
             Map.Entry p = (Map.Entry)iter.next();
 
             if ((int)p.getKey() < peerID) {
-                //Client client = new Client(peers.get(peerID), (Peer)p.getValue());
-                //client.link();
+                Client client = new Client(peers.get(peerID), (Peer)p.getValue());
+                client.link();
                 log.tcpToPeer(peerID, (int)p.getKey());
             }
 
-//            peers.get(peerID).peerChokeTracker();
-//            peers.get(peerID).startOptimisticallyUnchokingPeer();
+            peers.get(peerID).chokeCounter();
+            peers.get(peerID).startOptimisticallyUnchokingPeer();
         }
-
-
-        // Implement File Handling
-        // Manage complete and partial files
-
-        // Local Testing
-        // Test your program locally
 
     }
 }
