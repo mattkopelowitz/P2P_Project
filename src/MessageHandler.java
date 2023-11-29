@@ -5,6 +5,22 @@ import java.nio.*;
 
 // handles incoming messages with runnable
 public class MessageHandler implements Runnable{
+
+    // Constructor for Serv.java
+    public MessageHandler(ObjectInputStream input, ObjectOutputStream output, Peer p) {
+
+    }
+
+    // Constructor for Cli.java
+    public MessageHandler(ObjectInputStream input, ObjectOutputStream output, Peer p, Socket s) {
+
+    }
+
+    // Constructor for Peer.java
+    public MessageHandler() {
+
+    }
+
     public void run(){
 
         // implement switch case for message type
@@ -32,6 +48,11 @@ public class MessageHandler implements Runnable{
     }
 
     public byte[] unchoke() {
+        byte[] msg = new byte[0];
+        return msg;
+    }
+
+    public byte[] unchokeMsg() {
         byte[] msg = new byte[0];
         return msg;
     }

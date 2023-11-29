@@ -2,6 +2,9 @@ import java.io.*;
 import java.util.*;
 import java.nio.file.*;
 import java.time.*;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 public class Peer {
 
     // Peer info variables from PeerInfo.cfg
@@ -16,8 +19,8 @@ public class Peer {
     int downloadedBytes;
     double downloadRate;
     ObjectOutputStream out;
-    private MessageHandler creator;
-    int optimisticallyUnchockedPeer;
+    private MessageHandler msgHandler;
+    int optUnchockedPeer;
     List<Integer> unchokedPeers;
 
     // Common info variables from Common.cfg
@@ -29,8 +32,8 @@ public class Peer {
     BitSet bitfield;
     int numPiecesDownloaded;
     boolean hasFile;
-    int unchokingInterval;
-    int optimisticUnchokingInterval;
+    int unchokeInterval;
+    int optUnchokeInterval;
     LogWriter log;
 
     public void setInfo(int id, String name, int port, int conFile) {
@@ -42,7 +45,7 @@ public class Peer {
         interestingPieces = new HashMap<Integer, BitSet>();
         interestedPeers = new ArrayList<>();
         bitfield = new BitSet(numPieces);
-        creator = new MessageHandler();
+        msgHandler = new MessageHandler();
         downloadedBytes = 0;
         numPiecesDownloaded = 0;
 
@@ -58,11 +61,6 @@ public class Peer {
         file = new byte[numPieces][];
     }
 
-    public void setPeerManager(HashMap<Integer, Peer> peerMan){
-        peerManager = peerMan;
-        log = new LogWriter(peerManager.get(peerID));
-    }
-
     public void readFile() {
         if (containsFile == 1) {
             try {
@@ -73,6 +71,11 @@ public class Peer {
                 }
             } catch (IOException ioException) {}
         }
+    }
+
+    public void setPeerManager(HashMap<Integer, Peer> peerMan){
+        peerManager = peerMan;
+        log = new LogWriter(peerManager.get(peerID));
     }
 
     void readCommonCfg() throws FileNotFoundException {
@@ -92,8 +95,8 @@ public class Peer {
         fileSize = Integer.parseInt(vars.get(4));
         pieceSize = Integer.parseInt(vars.get(5));
         numPieces = (int) Math.ceil((double)fileSize/pieceSize);
-        unchokingInterval = Integer.parseInt(vars.get(1)) * 1000;
-        optimisticUnchokingInterval = Integer.parseInt(vars.get(2)) * 1000;
+        unchokeInterval = Integer.parseInt(vars.get(1)) * 1000;
+        optUnchokeInterval = Integer.parseInt(vars.get(2)) * 1000;
     }
 
     public void chokeCounter() {
@@ -104,7 +107,7 @@ public class Peer {
                 try {
                     peersSelection(interestedPeers, startTime[0]);
                     startTime[0] = Instant.now();
-                    Thread.sleep(unchokingInterval);
+                    Thread.sleep(unchokeInterval);
                 } catch (InterruptedException | IOException e) {
                     System.out.println("Interruption");
                     e.printStackTrace();
@@ -116,6 +119,9 @@ public class Peer {
 
     public void resetDownloadBytes() {
         this.downloadedBytes = 0;
+    }
+    public void addUnchoked(int peerID) {
+        unchokedPeers.add(peerID);
     }
 
     public void send(byte[] msg, ObjectOutputStream stream, int remotePeerID) {
@@ -131,10 +137,6 @@ public class Peer {
         if (unchokedPeers.contains(peerID)) {
             unchokedPeers.remove(peerID);
         }
-    }
-
-    public void addUnchoked(int peerID) {
-        unchokedPeers.add(peerID);
     }
 
     public static <K, V> K getKey(HashMap<K, V> map, V value) {
@@ -172,7 +174,7 @@ public class Peer {
             unchokedPeers.stream()
                     .filter(peer -> !Arrays.stream(preferredNeighbors).anyMatch(neighbor -> neighbor == peer && peer != 0))
                     .forEach(peer -> {
-                        send(creator.choke(), peerManager.get(peer).out, peer);
+                        send(msgHandler.choke(), peerManager.get(peer).out, peer);
                         peersToChoke.add(peer);
                     });
 
@@ -188,7 +190,7 @@ public class Peer {
             unchokedPeers.stream()
                     .filter(peer -> !Arrays.stream(preferredNeighbors).anyMatch(neighbor -> neighbor == peer && peer != 0))
                     .forEach(peer -> {
-                        send(creator.choke(), peerManager.get(peer).out, peer);
+                        send(msgHandler.choke(), peerManager.get(peer).out, peer);
                         peersToChoke.add(peer);
                     });
 
@@ -207,17 +209,68 @@ public class Peer {
                     .filter(neighbor -> !unchokedPeers.contains(neighbor) && neighbor != 0)
                     .forEach(neighbor -> {
                         addUnchoked(neighbor);
-                        send(creator.unchoke(), peerManager.get(neighbor).out, neighbor);
+                        send(msgHandler.unchoke(), peerManager.get(neighbor).out, neighbor);
                     });
 
             unchokedPeers.stream()
                     .filter(peer -> !Arrays.stream(preferredNeighbors).anyMatch(neighbor -> neighbor == peer && peer != 0))
                     .forEach(peer -> {
-                        send(creator.choke(), peerManager.get(peer).out, peer);
+                        send(msgHandler.choke(), peerManager.get(peer).out, peer);
                         peersToChoke.add(peer);
                     });
 
             peersToChoke.forEach(this::rmUnchoked);
+        }
+    }
+
+
+
+
+
+
+    // BELOW NEEDS TO BE EDITED
+
+    private List<Integer> getInterestedPeers() {
+        return interestedPeers;
+    }
+    public void startOptUnchokePeer() {
+        Peer peer = this;
+        Thread thread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+
+                // Stop thread when all peers have finished downloading
+                while(true) {
+                    try {
+                        peer.optUnchokePeer(peer.getInterestedPeers());
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    try {
+                        Thread.sleep(optUnchokeInterval);
+                    } catch (InterruptedException interruptedException) {
+                        System.out.println("Thread to optimistically unchoke neighbor interrupted while trying to sleep.");
+                        interruptedException.printStackTrace();
+                    }
+                }
+            }
+        });
+        thread.start();
+    }
+
+    private void optUnchokePeer(List<Integer> InterestedPeers) throws IOException {
+        List<Integer> candidatePeers = new ArrayList<>();
+        for(int interestedPeerId : InterestedPeers) {
+            if(!unchokedPeers.contains(interestedPeerId)) {
+                candidatePeers.add(interestedPeerId);
+            }
+        }
+        if(!candidatePeers.isEmpty()) {
+            Collections.shuffle(candidatePeers, new Random());
+            int optUnchokedPeerID = candidatePeers.get(0);
+            log.optimisticUnchoke(peerID, optUnchokedPeerID);
+            send(msgHandler.unchokeMsg(), peerManager.get(optUnchokedPeerID).out, optUnchokedPeerID);
+            this.optUnchockedPeer = optUnchokedPeerID;
         }
     }
 

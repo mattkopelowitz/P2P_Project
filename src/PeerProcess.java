@@ -26,16 +26,17 @@ public class PeerProcess {
             peers.put(peer.peerID, peer);
         }
 
+        // Set peer manager and reads the download file
         peers.get(peerID).setPeerManager(peers);
         peers.get(peerID).readFile();
 
         // Start Logs
         LogWriter log = new LogWriter(peers.get(peerID));
         log.setVars(peerID, peers.get(peerID).bitfield, peers.get(peerID).hostName, peers.get(peerID).portNumber, peers.get(peerID).containsFile);
-        log.setCommonVars(peers.get(peerID).numOfPreferredNeighbors, peers.get(peerID).unchokingInterval, peers.get(peerID).optimisticUnchokingInterval, peers.get(peerID).downloadFileName, peers.get(peerID).fileSize, peers.get(peerID).pieceSize, peers.get(peerID).numPieces);
+        log.setCommonVars(peers.get(peerID).numOfPreferredNeighbors, peers.get(peerID).unchokeInterval, peers.get(peerID).optUnchokeInterval, peers.get(peerID).downloadFileName, peers.get(peerID).fileSize, peers.get(peerID).pieceSize, peers.get(peerID).numPieces);
 
         // Start Server
-        Server server = new Server(peers.get(peerID));
+        TestServer server = new TestServer(peers.get(peerID));
         Thread serverThread = new Thread(server);
         serverThread.start();
 
@@ -45,13 +46,13 @@ public class PeerProcess {
             Map.Entry p = (Map.Entry)iter.next();
 
             if ((int)p.getKey() < peerID) {
-                Client client = new Client(peers.get(peerID), (Peer)p.getValue());
+                TestClient client = new TestClient(peers.get(peerID), (Peer)p.getValue());
                 client.link();
                 log.tcpToPeer(peerID, (int)p.getKey());
             }
 
             peers.get(peerID).chokeCounter();
-            peers.get(peerID).startOptimisticallyUnchokingPeer();
+            peers.get(peerID).startOptUnchokePeer();
         }
 
     }
