@@ -2,7 +2,7 @@ import java.io.*;
 import java.util.*;
 
 
-public class PeerProcess {
+public class peerProcess {
     public static void main(String[] args) throws FileNotFoundException {
 
         // Check for peer ID when compiling
@@ -52,7 +52,7 @@ public class PeerProcess {
             }
 
             peers.get(peerID).chokeCounter();
-            peers.get(peerID).startOptUnchokePeer();
+            peers.get(peerID).optUnchokePeer();
         }
 
     }

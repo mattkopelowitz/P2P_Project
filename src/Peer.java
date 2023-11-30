@@ -84,7 +84,7 @@ public class Peer {
 
         Scanner input = new Scanner(common);
 
-        while(input.hasNextLine()){
+        while (input.hasNextLine()) {
             String line = input.nextLine();
             String[] variables = line.split(" ");
             vars.add(variables[1]);
@@ -223,34 +223,37 @@ public class Peer {
         }
     }
 
-
-
-
-
-
-    // BELOW NEEDS TO BE EDITED
-
     private List<Integer> getInterestedPeers() {
         return interestedPeers;
     }
-    public void startOptUnchokePeer() {
+
+    public void optUnchokePeer() {
         Peer peer = this;
         Thread thread = new Thread(new Runnable() {
             @Override
             public void run() {
+                while (true) {
+                    List<Integer> interestedPeers = peer.getInterestedPeers();
+                    List<Integer> candidatePeers = new ArrayList<>();
 
-                // Stop thread when all peers have finished downloading
-                while(true) {
-                    try {
-                        peer.optUnchokePeer(peer.getInterestedPeers());
-                    } catch (IOException e) {
-                        e.printStackTrace();
+                    for (int interestedPeerID : interestedPeers) {
+                        if (!peer.unchokedPeers.contains(interestedPeerID)) {
+                            candidatePeers.add(interestedPeerID);
+                        }
                     }
+
+                    if (!candidatePeers.isEmpty()) {
+                        Collections.shuffle(candidatePeers, new Random());
+                        int optUnchokedPeerID = candidatePeers.get(0);
+                        peer.log.optimisticUnchoke(peer.peerID, optUnchokedPeerID);
+                        peer.send(peer.msgHandler.unchokeMsg(), peer.peerManager.get(optUnchokedPeerID).out, optUnchokedPeerID);
+                        peer.optUnchockedPeer = optUnchokedPeerID;
+                    }
+
                     try {
-                        Thread.sleep(optUnchokeInterval);
-                    } catch (InterruptedException interruptedException) {
-                        System.out.println("Thread to optimistically unchoke neighbor interrupted while trying to sleep.");
-                        interruptedException.printStackTrace();
+                        Thread.sleep(peer.optUnchokeInterval);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
                     }
                 }
             }
@@ -258,21 +261,6 @@ public class Peer {
         thread.start();
     }
 
-    private void optUnchokePeer(List<Integer> InterestedPeers) throws IOException {
-        List<Integer> candidatePeers = new ArrayList<>();
-        for(int interestedPeerId : InterestedPeers) {
-            if(!unchokedPeers.contains(interestedPeerId)) {
-                candidatePeers.add(interestedPeerId);
-            }
-        }
-        if(!candidatePeers.isEmpty()) {
-            Collections.shuffle(candidatePeers, new Random());
-            int optUnchokedPeerID = candidatePeers.get(0);
-            log.optimisticUnchoke(peerID, optUnchokedPeerID);
-            send(msgHandler.unchokeMsg(), peerManager.get(optUnchokedPeerID).out, optUnchokedPeerID);
-            this.optUnchockedPeer = optUnchokedPeerID;
-        }
-    }
 
 
 }
