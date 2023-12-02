@@ -30,7 +30,7 @@ public class TestClient {
             in = new ObjectInputStream(socket.getInputStream());
 
             // Create message handler to handle incoming and outgoing messages
-            MessageHandler handler = new MessageHandler(in, out, peer, socket, targetPeer);
+            MessageHandler handler = new MessageHandler(in, out, peer, targetPeer);
 
             // Start the handler on its own thread
             Thread handlerThread = new Thread(handler);

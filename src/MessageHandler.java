@@ -9,23 +9,21 @@ public class MessageHandler implements Runnable{
     private ObjectInputStream input;
     private ObjectOutputStream output;
     private Peer p;
-    private Socket s;
     private Peer targetPeer;
     private Message message;
 
-    // Constructor for Serv.java
+    // Constructor for Server.java
     public MessageHandler(ObjectInputStream input, ObjectOutputStream output, Peer p) {
         this.input = input;
         this.output = output;
         this.p = p;
     }
 
-    // Constructor for Cli.java
-    public MessageHandler(ObjectInputStream input, ObjectOutputStream output, Peer p, Socket s, Peer target) {
+    // Constructor for Client.java
+    public MessageHandler(ObjectInputStream input, ObjectOutputStream output, Peer p, Peer target) {
         this.input = input;
         this.output = output;
         this.p = p;
-        this.s = s;
         targetPeer = target;
     }
 
