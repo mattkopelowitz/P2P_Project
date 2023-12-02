@@ -10,7 +10,7 @@ public class Message {
     };
 
     // creates handshake message
-    public byte[] handshakeMessage(int peerID) throws IOException {
+    public byte[] handshakeMsg(int peerID) throws IOException {
 
         // create output stream (makes buffer to write to)
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream( );
@@ -38,7 +38,7 @@ public class Message {
     }
 
     // creates choke message (value 0)
-    public byte[] chokeMessage() throws IOException {
+    public byte[] chokeMsg() throws IOException {
 
         // init output buffer and length
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream(5);
@@ -61,7 +61,7 @@ public class Message {
     }
 
     // create unchoke message (value 1)
-    public byte[] unchokeMessage() throws IOException {
+    public byte[] unchokeMsg() throws IOException {
 
         // init output buffer & length
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream(5);
@@ -85,7 +85,7 @@ public class Message {
     }
 
     // create interested message (value 2)
-    public byte[] interestedMessage() throws IOException {
+    public byte[] interestedMsg() throws IOException {
 
         // init output buffer & length
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream(5);
@@ -108,7 +108,7 @@ public class Message {
     }
 
     // create not interested message (value 3)
-    public byte[] notInterestedMessage() throws IOException {
+    public byte[] notInterestedMsg() throws IOException {
 
         // init output buffer & length
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream(5);
@@ -131,7 +131,7 @@ public class Message {
     }
 
     // create have message (value 4)
-    public byte[] haveMessage(int pieceIndex) throws IOException{
+    public byte[] haveMsg(int pieceIndex) throws IOException{
 
         // init output buffer & length
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
@@ -162,7 +162,7 @@ public class Message {
     }
 
     // creates bitfield message (value 5)
-    public byte[] bitFieldMessage(BitSet bitfield) throws IOException {
+    public byte[] bitFieldMsg(BitSet bitfield) throws IOException {
         
         //create output stream & init length
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
@@ -193,7 +193,7 @@ public class Message {
     }
 
     // creates request message (value 6)
-    public byte[] requestMessage(int pieceIndex) throws IOException{
+    public byte[] requestMsg(int pieceIndex) throws IOException{
 
         // init output buffer & length
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
@@ -224,7 +224,7 @@ public class Message {
     }
 
     // create piece message (value 7)
-    public byte[] pieceMessage(int pieceIndex, byte[] pieceContent) throws IOException{
+    public byte[] pieceMsg(int pieceIndex, byte[] pieceContent) throws IOException{
 
         // init output buffer & length
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
@@ -256,10 +256,6 @@ public class Message {
         outputStream.write(pieceContent);
 
         return outputStream.toByteArray();
-    }
-
-    public static void main(String arg[]) throws IOException {
-        // do any necessary main functions
     }
     
 }
