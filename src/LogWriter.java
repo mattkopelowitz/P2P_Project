@@ -15,7 +15,7 @@ public class LogWriter {
         peer = p;
         peerID = peer.peerID;
         logger = Logger.getLogger(Integer.toString(peerID));
-        String path = "./logs/peer_" + Integer.toString(peerID) + ".log";
+        String path = "logs/peer_" + Integer.toString(peerID) + ".log";
 
         try {
             fh = new FileHandler(path);
