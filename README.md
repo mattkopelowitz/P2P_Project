@@ -4,6 +4,7 @@ Group Number: 26
 Team Members:
 - Kendall Stansfield-Phillips (kstansfieldphill@ufl.edu) 
 - Matthew Kopelowitz (m.kopelowitz@ufl.edu)
+
 Contribution of Each Team Members
 YouTube video link: 
 What you were able to achieve and what you were not
