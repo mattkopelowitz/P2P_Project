@@ -26,7 +26,7 @@ public class peerProcess {
             peers.put(peer.peerID, peer);
         }
 
-        // Set peer manager and reads the download file
+        // Set peer manager and reads the file to download
         peers.get(peerID).setPeerManager(peers);
         peers.get(peerID).readFile();
 
