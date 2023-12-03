@@ -17,10 +17,10 @@ public class Peer {
     HashMap<Integer, BitSet> interestingPieces;
     byte[][] file;
     int downloadedBytes;
-    double downloadRate;
+    double downloadRate = 0;
     ObjectOutputStream out;
     private Message message;
-    int optUnchockedPeer;
+    int optUnchockedPeer = 0;
     List<Integer> unchokedPeers;
 
     // Common info variables from Common.cfg
@@ -35,6 +35,15 @@ public class Peer {
     int unchokeInterval;
     int optUnchokeInterval;
     LogWriter log;
+
+    // Peer Constructor
+    public Peer() {
+        try {
+            readCommonCfg();
+        } catch(FileNotFoundException e) {
+
+        }
+    }
 
     public void setInfo(int id, String name, int port, int conFile) {
         peerID = id;

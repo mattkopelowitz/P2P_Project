@@ -15,7 +15,7 @@ public class LogWriter {
         peer = p;
         peerID = peer.peerID;
         logger = Logger.getLogger(Integer.toString(peerID));
-        String path = "logs/peer_" + Integer.toString(peerID) + ".log";
+        String path = "log_peer_" + Integer.toString(peerID) + ".log";
 
         try {
             fh = new FileHandler(path);
@@ -29,8 +29,8 @@ public class LogWriter {
 
     //returns the current date and time in the chosen format
     public String time() {
-        SimpleDateFormat format = new SimpleDateFormat("yyyy-mm-dd 'at' hh:mm:ss");
-        Date date = new Date(System.currentTimeMillis());
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd 'at' hh:mm:ss");
+        Date date = new Date();
         return format.format(date) + ": ";
     }
 

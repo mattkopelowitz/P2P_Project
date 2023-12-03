@@ -11,7 +11,7 @@ public class peerProcess {
             System.exit(1);
         }
 
-        // Set up peers
+        // Set up peers map
         int peerID = Integer.parseInt(args[0]);
         File peerInfo = new File("PeerInfo.cfg");
         Scanner input = new Scanner(peerInfo);
