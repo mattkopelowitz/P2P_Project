@@ -285,7 +285,7 @@ public class MessageHandler implements Runnable{
                     int requestedPieceIndex = ByteBuffer.wrap(payload).getInt();
 
                     // Check if the peer is unchoked
-                    if(!p.unchokedPeers.contains(targetPeer)) {
+                    if(!p.unchokedPeers.contains(remotePeerID)) {
                         break;
                     }
 
