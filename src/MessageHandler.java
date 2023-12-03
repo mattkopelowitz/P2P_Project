@@ -25,12 +25,7 @@ public class MessageHandler implements Runnable{
         this.input = input;
         this.output = output;
         this.p = p;
-        targetPeer = target;
-    }
-
-    // Constructor for Peer.java
-    public MessageHandler() {
-
+        this.targetPeer = target;
     }
 
     public void run(){
