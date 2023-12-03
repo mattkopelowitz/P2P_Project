@@ -142,6 +142,56 @@ public class Peer {
         numPiecesDownloaded++;
     }
 
+    public void updateBitfield(int index) {
+        bitfield.set(index, true);
+        if (bitfield.nextClearBit(0) == numPieces) {
+            hasFile = true;
+            containsFile = 1;
+        }
+    }
+
+    public int getRequestIndex(int targetID) {
+        BitSet pieces =  (BitSet)bitfield.clone();
+        pieces.flip(0,numPieces);
+        pieces.and(interestingPieces.get(targetID));
+        List<Integer> index = new ArrayList<>();
+
+        for(int i = 0; i < pieces.length(); i++){
+            if(pieces.get(i) == true) index.add(i);
+        }
+
+        Collections.shuffle(index, new Random());
+        return index.get(0);
+    }
+
+    public void saveFile() {
+        FileOutputStream output = null;
+        try {
+            File path = new File("./peer_" + peerID);
+            path.mkdirs();
+            File location = new File(path, downloadFileName);
+            location.createNewFile();
+            output = new FileOutputStream(location);
+
+            for(int i = 0; i < numPieces; i++){
+                output.write(file[i]);
+            }
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException io) {
+            io.printStackTrace();
+        } finally {
+            if(output != null) {
+                try {
+                    output.flush();
+                    output.close();
+                } catch(IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+
     public void chokeCounter() {
         Peer peer = this;
         Instant[] startTime = {Instant.now()};

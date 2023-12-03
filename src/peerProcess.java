@@ -36,7 +36,7 @@ public class peerProcess {
         log.setCommonVars(peers.get(peerID).numOfPreferredNeighbors, peers.get(peerID).unchokeInterval, peers.get(peerID).optUnchokeInterval, peers.get(peerID).downloadFileName, peers.get(peerID).fileSize, peers.get(peerID).pieceSize, peers.get(peerID).numPieces);
 
         // Start Server
-        TestServer server = new TestServer(peers.get(peerID));
+        Server server = new Server(peers.get(peerID));
         Thread serverThread = new Thread(server);
         serverThread.start();
 
@@ -46,7 +46,7 @@ public class peerProcess {
             Map.Entry p = (Map.Entry)iter.next();
 
             if ((int)p.getKey() < peerID) {
-                TestClient client = new TestClient(peers.get(peerID), (Peer)p.getValue());
+                Client client = new Client(peers.get(peerID), (Peer)p.getValue());
                 client.link();
                 log.tcpToPeer(peerID, (int)p.getKey());
             }

@@ -193,7 +193,7 @@ public class Message {
     }
 
     // creates request message (value 6)
-    public byte[] requestMsg(int pieceIndex) throws IOException{
+    public byte[] requestMsg(int pieceIndex) throws IOException {
 
         // init output buffer & length
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();

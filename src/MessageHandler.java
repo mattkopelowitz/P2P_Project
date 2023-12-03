@@ -229,14 +229,13 @@ public class MessageHandler implements Runnable{
                     p.file[pieceIndexInt] = piece;
                     p.incrementPiecesDownloaded();
 
-                    //Set bitfield to indicate we now have this piece ( we will not request this piece)
-                    p.peerManager.get(targetPeer.peerID).updatePeerDownloadedBytes(piece.length);
-                    p.updatePeerBitfield(pieceIndexInt);
+                    p.peerManager.get(targetPeer.peerID).downloadedBytes += piece.length;
+                    p.updateBitfield(pieceIndexInt);
 
                     p.peerManager.forEach((k,v) ->{
                         if(k != p.peerID){
                             try {
-                                p.send(message.haveMessage(pieceIndexInt), out, k );
+                                p.send(message.haveMsg(pieceIndexInt), output, k );
                             } catch (IOException e) {
                                 e.printStackTrace();
                             }
@@ -245,13 +244,14 @@ public class MessageHandler implements Runnable{
 
                     if(!p.hasFile) {
                         int requestPiece = p.getRequestIndex(targetPeer.peerID);
-
-                        //Create and send request message for the piece we want
-                        p.send(message.requestMessage(requestPiece), out, remotePeerId);
+                        try {
+                            p.send(message.requestMsg(requestPiece), output, targetPeer.peerID);
+                        } catch (IOException e) {
+                            throw new RuntimeException(e);
+                        }
                     }else{
-                        p.saveFileToDisk();
+                        p.saveFile();
                     }
-
                     break;
             }
     
