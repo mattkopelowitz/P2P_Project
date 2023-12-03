@@ -116,8 +116,11 @@ public class MessageHandler implements Runnable{
                     log.unchokedByNeighbor(p.peerID, targetPeer.peerID);
                     //check if peer has file and request
                     if (!p.hasFile) {
-                        // TODO get the index
-                        int index = 0;
+                        BitSet missingPieces = (BitSet) targetPeer.bitfield.clone();
+                        missingPieces.andNot(p.bitfield);
+
+                        Random random = new Random();
+                        int index = missingPieces.nextSetBit(random.nextInt(missingPieces.length()));
 
                         try {
                             p.send(message.requestMsg(index), output, remotePeerID);
