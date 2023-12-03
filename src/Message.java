@@ -162,7 +162,7 @@ public class Message {
     }
 
     // creates bitfield message (value 5)
-    public byte[] bitFieldMsg(BitSet bitfield) throws IOException {
+    public static byte[] bitFieldMsg(BitSet bitfield) throws IOException {
         
         //create output stream & init length
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
