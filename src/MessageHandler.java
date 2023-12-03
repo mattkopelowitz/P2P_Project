@@ -76,7 +76,7 @@ public class MessageHandler implements Runnable{
         if(handShakeStr.equals("P2PFILESHARINGPROJ")) {
             log.connectedFromAnotherPeer(p.peerID, targetPeer.peerID);
             try {
-                p.send(Message.bitFieldMsg(p.bitfield), output, remotePeerID);
+                p.send(message.bitFieldMsg(p.bitfield), output, remotePeerID);
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -292,10 +292,10 @@ public class MessageHandler implements Runnable{
                     if (p.bitfield.get(requestedPieceIndex)) {
 
                         // If unchoked and has the piece, send the piece to the requesting peer
-                        byte[] pieceData = peer.file[requestedPieceIndex].clone();
+                        byte[] pieceData = p.file[requestedPieceIndex].clone();
 
                         try {
-                            p.send(Message.pieceMsg(requestedPieceIndex, pieceData), output, remotePeerID);
+                            p.send(message.pieceMsg(requestedPieceIndex, pieceData), output, remotePeerID);
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
