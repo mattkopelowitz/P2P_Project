@@ -29,3 +29,8 @@ How To Run the Project:
 
 How to Run the Project on CISE machine:
 
+1. SSH into cise machine in six different terminals (run: ssh username@thunder.cise.ufl.edu)
+2. clone the git repository
+3. cd into the P2P_Project/src directory
+4. Run (javac peerProcess.java) in the first terminal
+5. Run (java peerProcess [peerNumber]) in all terminals in order of the peerNumbers listed in peerInfo.cfg
