@@ -10,7 +10,9 @@ Team Members:
 Contribution of Each Team Members
 
 Matthew worked on peerProcess, Peer, and LogWriter
+
 Kendall worked on Message and MessageHandler
+
 Max worked on Server and Client
 
 YouTube video link: 
