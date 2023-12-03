@@ -178,6 +178,40 @@ public class MessageHandler implements Runnable{
 
                     break;
                 case 7: // take in piece, send have to peers
+                    byte[] index = new byte[4];
+                    int length = messageLength - 1;
+                    byte[] piece = new byte[length - 4];
+
+                    System.arraycopy(message, 5,index,0,index.length);
+                    System.arraycopy(message, 9, piece, 0, piece.length);
+
+                    int pieceIndexInt = ByteBuffer.wrap(index).getInt();
+
+                    p.file[pieceIndexInt] = piece;
+                    p.incrementPiecesDownloaded();
+
+                    //Set bitfield to indicate we now have this piece ( we will not request this piece)
+                    p.peerManager.get(targetPeer.peerID).updatePeerDownloadedBytes(piece.length);
+                    p.updatePeerBitfield(pieceIndexInt);
+
+                    p.peerManager.forEach((k,v) ->{
+                        if(k != p.peerID){
+                            try {
+                                p.send(message.haveMessage(pieceIndexInt), out, k );
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    });
+
+                    if(!p.hasFile) {
+                        int requestPiece = p.getRequestIndex(targetPeer.peerID);
+
+                        //Create and send request message for the piece we want
+                        p.send(message.requestMessage(requestPiece), out, remotePeerId);
+                    }else{
+                        p.saveFileToDisk();
+                    }
 
                     break;
             }

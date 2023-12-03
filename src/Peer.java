@@ -138,6 +138,10 @@ public class Peer {
         return interestedPeers;
     }
 
+    public void incrementPiecesDownloaded() {
+        numPiecesDownloaded++;
+    }
+
     public void chokeCounter() {
         Peer peer = this;
         Instant[] startTime = {Instant.now()};
