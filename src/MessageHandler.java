@@ -29,6 +29,9 @@ public class MessageHandler implements Runnable{
     }
 
     public void run(){
+        // get id int
+        int remotePeerID = new Integer(targetPeer.peerID);
+
         //make new logwriter
         LogWriter log = new LogWriter(p);
 
@@ -39,7 +42,7 @@ public class MessageHandler implements Runnable{
         } catch (IOException e) {}
 
         //send handshake message
-        p.send(handshakeBytes, output, targetPeer.peerID);
+        p.send(handshakeBytes, output, remotePeerID);
         
         //get the handshake message
         byte[] handshakeHeader = new byte[18];
@@ -68,7 +71,7 @@ public class MessageHandler implements Runnable{
         if(handShakeStr.equals("P2PFILESHARINGPROJ")) {
             log.connectedFromAnotherPeer(p.peerID, targetPeer.peerID);
             try {
-                p.send(Message.bitFieldMsg(p.bitfield), output, targetPeer.peerID);
+                p.send(Message.bitFieldMsg(p.bitfield), output, remotePeerID);
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -108,7 +111,17 @@ public class MessageHandler implements Runnable{
                     log.unchokedByNeighbor(p.peerID, targetPeer.peerID);
                     //check if peer has file and request
                     if (!p.hasFile) {
-                        //need to send a request message?
+                        BitSet missingPieces = (BitSet) targetPeer.bitfield.clone();
+                        missingPieces.andNot(p.bitfield);
+
+                        Random random = new Random();
+                        int index = missingPieces.nextSetBit(random.nextInt(missingPieces.length()));
+
+                        try {
+                            p.send(message.requestMsg(index), output, remotePeerID);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
                     }
                     break;
                 case 2: // log interested
@@ -128,7 +141,35 @@ public class MessageHandler implements Runnable{
                 case 4: // log peer have, send interested/ not interested
                     int havePiece = ByteBuffer.wrap(payload).getInt();
                     log.receivedHaveMsg(p.peerID, targetPeer.peerID, havePiece);
-                    
+                    // update peer's bitfield
+                    //TODO
+
+                    //if peer bitfield and updated bitfield match, send not interested
+                    if (p.bitfield.equals(remoteBitfield) || remoteBitfield.isEmpty()) {
+                        p.send(message.notInterestedMsg(), output, remotePeerID);
+                    } else if (!remoteBitfield.isEmpty() && p.bitfield.isEmpty()){
+                        //send interested message
+                        p.send(message.interestedMsg(), output, remotePeerID);
+                        
+                        //update interesting bits
+                        BitSet interesting = (BitSet) p.bitfield.clone();
+                        interesting.or(remoteBitfield);
+                        
+                        if(p.interestingPieces.containsKey(remotePeerID)) {
+                            if (!interesting.isEmpty()) {
+                                p.interestingPieces.replace(remotePeerID, interesting);
+                            } else { 
+                                p.interestingPieces.remove(remotePeerID);
+                            }
+                        } else {
+                            p.interestingPieces.put(remotePeerID, interesting);
+                        }
+                    } else {
+                        BitSet interesting = (BitSet) p.bitfield.clone();
+                        interesting.xor(remoteBitfield);
+                        
+                    }
+
                     break;
                 case 5: // save peer's bitfield, send interested/ not interested
 
