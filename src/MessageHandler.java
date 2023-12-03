@@ -219,7 +219,25 @@ public class MessageHandler implements Runnable{
 
                     break;
                 case 6: // log request, send piece if unchoked
+                    // Extract the piece index from the payload
+                    int requestedPieceIndex = ByteBuffer.wrap(payload).getInt();
 
+                    // Check if the peer is unchoked
+                    if(!p.unchokedPeers.contains(targetPeer)) {
+                        break;
+                    }
+
+                    if (p.bitfield.get(requestedPieceIndex)) {
+
+                        // If unchoked and has the piece, send the piece to the requesting peer
+                        byte[] pieceData = peer.file[requestedPieceIndex].clone();
+
+                        try {
+                            p.send(Message.pieceMsg(requestedPieceIndex, pieceData), output, remotePeerID);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
                     break;
                 case 7: // take in piece, send have to peers
 
