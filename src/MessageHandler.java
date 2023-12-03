@@ -139,17 +139,31 @@ public class MessageHandler implements Runnable{
                     }
                     break;
                 case 4: // log peer have, send interested/ not interested
-                    int havePiece = ByteBuffer.wrap(payload).getInt();
-                    log.receivedHaveMsg(p.peerID, targetPeer.peerID, havePiece);
-                    // update peer's bitfield
-                    //TODO
+                    int haveIndex = ByteBuffer.wrap(payload).getInt();
+                    log.receivedHaveMsg(p.peerID, targetPeer.peerID, haveIndex);
+                    // update remote peer's bitfield
+                    Peer remote = p.peerManager.get(remotePeerID);
+                    remote.bitfield.set(haveIndex, true);
+                    if(remote.bitfield.nextClearBit(0) == remote.numPieces) {
+                        remote.hasFile = true;
+                        remote.containsFile = 1;
+                    }
+                    BitSet remoteBitfield = remote.bitfield;
 
                     //if peer bitfield and updated bitfield match, send not interested
-                    if (p.bitfield.equals(remoteBitfield) || remoteBitfield.isEmpty()) {
-                        p.send(message.notInterestedMsg(), output, remotePeerID);
+                    if (p.bitfield.equals(remoteBitfield) || (remoteBitfield.isEmpty() && p.bitfield.isEmpty())) {
+                        try {
+                            p.send(message.notInterestedMsg(), output, remotePeerID);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
                     } else if (!remoteBitfield.isEmpty() && p.bitfield.isEmpty()){
                         //send interested message
-                        p.send(message.interestedMsg(), output, remotePeerID);
+                        try {
+                            p.send(message.interestedMsg(), output, remotePeerID);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
                         
                         //update interesting bits
                         BitSet interesting = (BitSet) p.bitfield.clone();
@@ -164,10 +178,35 @@ public class MessageHandler implements Runnable{
                         } else {
                             p.interestingPieces.put(remotePeerID, interesting);
                         }
-                    } else {
+                    } else { // peer bitfield is not empty and is not equal to remote
                         BitSet interesting = (BitSet) p.bitfield.clone();
                         interesting.xor(remoteBitfield);
-                        
+
+                        //send interested or not
+                        if (!interesting.isEmpty()) {
+                            try {
+                                p.send(message.interestedMsg(), output, remotePeerID);
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                        } else {
+                            try {
+                                p.send(message.notInterestedMsg(), output, remotePeerID);
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                        }
+
+                        // update peer's interesting pieces map
+                        if(p.interestingPieces.containsKey(remotePeerID)) {
+                            if (!interesting.isEmpty()) {
+                                p.interestingPieces.replace(remotePeerID, interesting);
+                            } else { 
+                                p.interestingPieces.remove(remotePeerID);
+                            }
+                        } else {
+                            p.interestingPieces.put(remotePeerID, interesting);
+                        }
                     }
 
                     break;
