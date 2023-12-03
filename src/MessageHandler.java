@@ -71,7 +71,7 @@ public class MessageHandler implements Runnable{
         if(handShakeStr.equals("P2PFILESHARINGPROJ")) {
             log.connectedFromAnotherPeer(p.peerID, targetPeer.peerID);
             try {
-                p.send(Message.bitFieldMsg(p.bitfield), output, remotePeerID);
+                p.send(message.bitFieldMsg(p.bitfield), output, remotePeerID);
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -211,10 +211,90 @@ public class MessageHandler implements Runnable{
 
                     break;
                 case 5: // save peer's bitfield, send interested/ not interested
+                    // setting peer bitfield
+                    BitSet recieved = BitSet.valueOf(payload);
+                    p.peerManager.get(remotePeerID).bitfield = (BitSet) recieved.clone();
+
+                    // set & send interested/ not interested
+                    if (p.bitfield.equals(recieved) || (p.bitfield.isEmpty() && recieved.isEmpty())) {
+                        try {
+                            p.send(message.notInterestedMsg(), output, remotePeerID);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    } else if (!recieved.isEmpty() && p.bitfield.isEmpty()) {
+                        //send interested message
+                        try {
+                            p.send(message.interestedMsg(), output, remotePeerID);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                        
+                        //update interesting bits
+                        BitSet interesting = (BitSet) p.bitfield.clone();
+                        interesting.or(recieved);
+                        
+                        if(p.interestingPieces.containsKey(remotePeerID)) {
+                            if (!interesting.isEmpty()) {
+                                p.interestingPieces.replace(remotePeerID, interesting);
+                            } else { 
+                                p.interestingPieces.remove(remotePeerID);
+                            }
+                        } else {
+                            p.interestingPieces.put(remotePeerID, interesting);
+                        }
+                    } else {
+                        BitSet interesting = (BitSet) p.bitfield.clone();
+                        interesting.xor(recieved);
+
+                        //send interested or not
+                        if (!interesting.isEmpty()) {
+                            try {
+                                p.send(message.interestedMsg(), output, remotePeerID);
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                        } else {
+                            try {
+                                p.send(message.notInterestedMsg(), output, remotePeerID);
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                        }
+
+                        // update peer's interesting pieces map
+                        if(p.interestingPieces.containsKey(remotePeerID)) {
+                            if (!interesting.isEmpty()) {
+                                p.interestingPieces.replace(remotePeerID, interesting);
+                            } else { 
+                                p.interestingPieces.remove(remotePeerID);
+                            }
+                        } else {
+                            p.interestingPieces.put(remotePeerID, interesting);
+                        }
+                    }
 
                     break;
                 case 6: // log request, send piece if unchoked
+                    // Extract the piece index from the payload
+                    int requestedPieceIndex = ByteBuffer.wrap(payload).getInt();
 
+                    // Check if the peer is unchoked
+                    if(!p.unchokedPeers.contains(remotePeerID)) {
+                        break;
+                    }
+
+                    if (p.bitfield.get(requestedPieceIndex)) {
+
+                        // If unchoked and has the piece, send the piece to the requesting peer
+                        byte[] pieceData = p.file[requestedPieceIndex].clone();
+
+                        try {
+                            p.send(message.pieceMsg(requestedPieceIndex, pieceData), output, remotePeerID);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
                     break;
                 case 7: // take in piece, send have to peers
                     byte[] index = new byte[4];
