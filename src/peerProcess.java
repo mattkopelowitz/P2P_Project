@@ -11,7 +11,7 @@ public class peerProcess {
             System.exit(1);
         }
 
-        // Set up peers map
+        // Set up map of peers
         int peerID = Integer.parseInt(args[0]);
         File peerInfo = new File("PeerInfo.cfg");
         Scanner input = new Scanner(peerInfo);
@@ -51,8 +51,8 @@ public class peerProcess {
                 log.tcpToPeer(peerID, (int)p.getKey());
             }
 
-            peers.get(peerID).chokeCounter();
-            peers.get(peerID).optUnchokePeer();
+//            peers.get(peerID).chokeCounter();
+//            peers.get(peerID).optUnchokePeer();
         }
 
     }
