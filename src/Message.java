@@ -13,7 +13,7 @@ public class Message {
     public byte[] handshakeMsg(int peerID) throws IOException {
 
         // create output stream (makes buffer to write to)
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream( );
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 
         // init handshake message string
         String handshakeStr = "P2PFILESHARINGPROJ";

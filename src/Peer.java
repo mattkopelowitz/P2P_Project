@@ -115,6 +115,10 @@ public class Peer {
         unchokedPeers.add(peerID);
     }
 
+    public int getPeerID() {
+        return peerID;
+    }
+
 
     public void send(byte[] msg, ObjectOutputStream stream) {
         try {
@@ -192,158 +196,5 @@ public class Peer {
             }
         }
     }
-
-//    public void chokeCounter() {
-//        Peer peer = this;
-//        Instant[] startTime = {Instant.now()};
-//        Thread thread = new Thread(() -> {
-//            while (true) {
-//                try {
-//                    peersSelection(interestedPeers, startTime[0]);
-//                    startTime[0] = Instant.now();
-//                    Thread.sleep(unchokeInterval);
-//                } catch (InterruptedException | IOException e) {
-//                    System.out.println("Interruption");
-//                    e.printStackTrace();
-//                }
-//            }
-//        });
-//        thread.start();
-//    }
-//
-//    public void peersSelection(List<Integer> interestedPeers, Instant startTime) throws IOException {
-//        HashMap<Integer, Double> candidatePeers = new HashMap<>();
-//        int[] preferredNeighbors = new int[numOfPreferredNeighbors];
-//        List<Integer> peersToChoke = new ArrayList<>();
-//        Instant finish = Instant.now();
-//
-//        peerManager.forEach((id, peerValues) -> {
-//            if (id != peerID) {
-//                int timeElapsed = Duration.between(startTime, finish).getNano();
-//                peerValues.downloadRate = ((double) peerValues.downloadedBytes / timeElapsed);
-//                candidatePeers.put(id, peerValues.downloadRate);
-//            }
-//        });
-//
-//        resetDownloadBytes();
-//
-//        Collection<Double> values = candidatePeers.values();
-//        ArrayList<Double> listOfValues = new ArrayList<>(values);
-//        listOfValues.sort(Comparator.naturalOrder());
-//
-//        if (!interestedPeers.isEmpty()) {
-//            int peerSelectionLimit = Math.min(interestedPeers.size(), preferredNeighbors.length);
-//
-//            for (int i = 0; i < peerSelectionLimit; i++) {
-//                preferredNeighbors[i] = interestedPeers.get(i);
-//            }
-//
-//            log.changeNeighbors(peerID, preferredNeighbors);
-//
-//            unchokedPeers.stream()
-//                    .filter(peer -> !Arrays.stream(preferredNeighbors).anyMatch(neighbor -> neighbor == peer && peer != 0))
-//                    .forEach(peer -> {
-//                        try {
-//                            send(message.chokeMsg(), peerManager.get(peer).out);
-//                        } catch (IOException e) {
-//                            throw new RuntimeException(e);
-//                        }
-//                        peersToChoke.add(peer);
-//                    });
-//
-//            peersToChoke.forEach(this::rmUnchoked);
-//        } else if (containsFile == 1) {
-//            Collections.shuffle(interestedPeers, new Random());
-//            for (int i = 0; i < preferredNeighbors.length; i++) {
-//                preferredNeighbors[i] = interestedPeers.get(i);
-//            }
-//
-//            log.changeNeighbors(peerID, preferredNeighbors);
-//
-//            unchokedPeers.stream()
-//                    .filter(peer -> !Arrays.stream(preferredNeighbors).anyMatch(neighbor -> neighbor == peer && peer != 0))
-//                    .forEach(peer -> {
-//                        try {
-//                            send(message.chokeMsg(), peerManager.get(peer).out);
-//                        } catch (IOException e) {
-//                            throw new RuntimeException(e);
-//                        }
-//                        peersToChoke.add(peer);
-//                    });
-//
-//            peersToChoke.forEach(this::rmUnchoked);
-//        } else {
-//            for (int i = 0; i < preferredNeighbors.length; i++) {
-//                if (interestedPeers.contains(getKey(candidatePeers, listOfValues.get(listOfValues.size() - 1)))) {
-//                    preferredNeighbors[i] = getKey(candidatePeers, listOfValues.get(listOfValues.size() - 1));
-//                }
-//                listOfValues.remove(listOfValues.size() - 1);
-//            }
-//
-//            log.changeNeighbors(peerID, preferredNeighbors);
-//
-//            Arrays.stream(preferredNeighbors)
-//                    .filter(neighbor -> !unchokedPeers.contains(neighbor) && neighbor != 0)
-//                    .forEach(neighbor -> {
-//                        addUnchoked(neighbor);
-//                        try {
-//                            send(message.unchokeMsg(), peerManager.get(neighbor).out);
-//                        } catch (IOException e) {
-//                            throw new RuntimeException(e);
-//                        }
-//                    });
-//
-//            unchokedPeers.stream()
-//                    .filter(peer -> !Arrays.stream(preferredNeighbors).anyMatch(neighbor -> neighbor == peer && peer != 0))
-//                    .forEach(peer -> {
-//                        try {
-//                            send(message.chokeMsg(), peerManager.get(peer).out);
-//                        } catch (IOException e) {
-//                            throw new RuntimeException(e);
-//                        }
-//                        peersToChoke.add(peer);
-//                    });
-//
-//            peersToChoke.forEach(this::rmUnchoked);
-//        }
-//    }
-//
-//    public void optUnchokePeer() {
-//        Peer peer = this;
-//        Thread thread = new Thread(new Runnable() {
-//            @Override
-//            public void run() {
-//                while (true) {
-//                    List<Integer> interestedPeers = peer.getInterestedPeers();
-//                    List<Integer> candidatePeers = new ArrayList<>();
-//
-//                    for (int interestedPeerID : interestedPeers) {
-//                        if (!peer.unchokedPeers.contains(interestedPeerID)) {
-//                            candidatePeers.add(interestedPeerID);
-//                        }
-//                    }
-//
-//                    if (!candidatePeers.isEmpty()) {
-//                        Collections.shuffle(candidatePeers, new Random());
-//                        int optUnchokedPeerID = candidatePeers.get(0);
-//                        peer.log.optimisticUnchoke(peer.peerID, optUnchokedPeerID);
-//                        try {
-//                            peer.send(peer.message.unchokeMsg(), peer.peerManager.get(optUnchokedPeerID).out);
-//                        } catch (IOException e) {
-//                            throw new RuntimeException(e);
-//                        }
-//                        peer.optUnchockedPeer = optUnchokedPeerID;
-//                    }
-//
-//                    try {
-//                        Thread.sleep(peer.optUnchokeInterval);
-//                    } catch (InterruptedException e) {
-//                        e.printStackTrace();
-//                    }
-//                }
-//            }
-//        });
-//        thread.start();
-//    }
 
 }

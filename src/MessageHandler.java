@@ -29,8 +29,7 @@ public class MessageHandler implements Runnable{
     }
 
     public void run(){
-        // get id int
-        int remotePeerID = targetPeer.peerID;
+        message = new Message();
 
         //make new logwriter
         LogWriter log = new LogWriter(p);
@@ -142,7 +141,7 @@ public class MessageHandler implements Runnable{
                     int haveIndex = ByteBuffer.wrap(payload).getInt();
                     log.receivedHaveMsg(p.peerID, targetPeer.peerID, haveIndex);
                     // update remote peer's bitfield
-                    Peer remote = p.peerManager.get(remotePeerID);
+                    Peer remote = p.peerManager.get(targetPeer.peerID);
                     remote.bitfield.set(haveIndex, true);
                     if(remote.bitfield.nextClearBit(0) == remote.numPieces) {
                         remote.hasFile = true;
@@ -169,14 +168,14 @@ public class MessageHandler implements Runnable{
                         BitSet interesting = (BitSet) p.bitfield.clone();
                         interesting.or(remoteBitfield);
                         
-                        if(p.interestingPieces.containsKey(remotePeerID)) {
+                        if(p.interestingPieces.containsKey(targetPeer.peerID)) {
                             if (!interesting.isEmpty()) {
-                                p.interestingPieces.replace(remotePeerID, interesting);
+                                p.interestingPieces.replace(targetPeer.peerID, interesting);
                             } else { 
-                                p.interestingPieces.remove(remotePeerID);
+                                p.interestingPieces.remove(targetPeer.peerID);
                             }
                         } else {
-                            p.interestingPieces.put(remotePeerID, interesting);
+                            p.interestingPieces.put(targetPeer.peerID, interesting);
                         }
                     } else { // peer bitfield is not empty and is not equal to remote
                         BitSet interesting = (BitSet) p.bitfield.clone();
@@ -198,14 +197,14 @@ public class MessageHandler implements Runnable{
                         }
 
                         // update peer's interesting pieces map
-                        if(p.interestingPieces.containsKey(remotePeerID)) {
+                        if(p.interestingPieces.containsKey(targetPeer.peerID)) {
                             if (!interesting.isEmpty()) {
-                                p.interestingPieces.replace(remotePeerID, interesting);
+                                p.interestingPieces.replace(targetPeer.peerID, interesting);
                             } else { 
-                                p.interestingPieces.remove(remotePeerID);
+                                p.interestingPieces.remove(targetPeer.peerID);
                             }
                         } else {
-                            p.interestingPieces.put(remotePeerID, interesting);
+                            p.interestingPieces.put(targetPeer.peerID, interesting);
                         }
                     }
 
@@ -213,7 +212,7 @@ public class MessageHandler implements Runnable{
                 case 5: // save peer's bitfield, send interested/ not interested
                     // setting peer bitfield
                     BitSet recieved = BitSet.valueOf(payload);
-                    p.peerManager.get(remotePeerID).bitfield = (BitSet) recieved.clone();
+                    p.peerManager.get(targetPeer.peerID).bitfield = (BitSet) recieved.clone();
 
                     // set & send interested/ not interested
                     if (p.bitfield.equals(recieved) || (p.bitfield.isEmpty() && recieved.isEmpty())) {
@@ -234,14 +233,14 @@ public class MessageHandler implements Runnable{
                         BitSet interesting = (BitSet) p.bitfield.clone();
                         interesting.or(recieved);
                         
-                        if(p.interestingPieces.containsKey(remotePeerID)) {
+                        if(p.interestingPieces.containsKey(targetPeer.peerID)) {
                             if (!interesting.isEmpty()) {
-                                p.interestingPieces.replace(remotePeerID, interesting);
+                                p.interestingPieces.replace(targetPeer.peerID, interesting);
                             } else { 
-                                p.interestingPieces.remove(remotePeerID);
+                                p.interestingPieces.remove(targetPeer.peerID);
                             }
                         } else {
-                            p.interestingPieces.put(remotePeerID, interesting);
+                            p.interestingPieces.put(targetPeer.peerID, interesting);
                         }
                     } else {
                         BitSet interesting = (BitSet) p.bitfield.clone();
@@ -263,14 +262,14 @@ public class MessageHandler implements Runnable{
                         }
 
                         // update peer's interesting pieces map
-                        if(p.interestingPieces.containsKey(remotePeerID)) {
+                        if(p.interestingPieces.containsKey(targetPeer.peerID)) {
                             if (!interesting.isEmpty()) {
-                                p.interestingPieces.replace(remotePeerID, interesting);
+                                p.interestingPieces.replace(targetPeer.peerID, interesting);
                             } else { 
-                                p.interestingPieces.remove(remotePeerID);
+                                p.interestingPieces.remove(targetPeer.peerID);
                             }
                         } else {
-                            p.interestingPieces.put(remotePeerID, interesting);
+                            p.interestingPieces.put(targetPeer.peerID, interesting);
                         }
                     }
 
@@ -280,7 +279,7 @@ public class MessageHandler implements Runnable{
                     int requestedPieceIndex = ByteBuffer.wrap(payload).getInt();
 
                     // Check if the peer is unchoked
-                    if(!p.unchokedPeers.contains(remotePeerID)) {
+                    if(!p.unchokedPeers.contains(targetPeer.peerID)) {
                         break;
                     }
 

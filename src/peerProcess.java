@@ -51,8 +51,6 @@ public class peerProcess {
                 log.tcpToPeer(peerID, (int)p.getKey());
             }
 
-//            peers.get(peerID).chokeCounter();
-//            peers.get(peerID).optUnchokePeer();
         }
 
     }
