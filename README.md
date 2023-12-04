@@ -13,7 +13,7 @@ Contribution of Each Team Members
 - Kendall worked on Message and MessageHandler
 - Max worked on Server and Client
 
-YouTube video link: 
+YouTube video link: https://youtu.be/ptZTXl4aeLA
 
 
 What you were able to achieve and what you were not:
